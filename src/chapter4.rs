@@ -20,6 +20,13 @@ pub fn run() {
     let r2 = &s;
     // mutable refs have to be unique!
     // let r3 = mut &s;
+    let mut s = String::from("Hello World!");
+    let word = first_word(&s); // does an immutable borrow of s
+    println!("{}", word);
+    s.clear(); // does mutable borrow of s
+               // println!("{}", word); // does an immutable borrow of s
+    let v = vec![3, 3, 3];
+    test(&v[..]);
 }
 
 fn primitive_copy() {
@@ -55,14 +62,19 @@ fn dangle() -> String {
     s
 }
 
-fn first_word(s: &String) -> usize {
+// returns a slice (only is valid as long as the orginal string is valid)
+fn first_word(s: &String) -> &str {
     // store string as array of chars
     let bytes = s.as_bytes();
     // iterate with an index, we use a ref for the byte
     for (i, &item) in bytes.iter().enumerate() {
         if item == b' ' {
-            return i;
+            return &s[0..i];
         }
     }
-    s.len()
+    &s[..]
+}
+
+fn test(v: &[u32]) {
+    println!("{:?}", v)
 }
