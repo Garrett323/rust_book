@@ -16,6 +16,13 @@ pub fn run() {
     };
 
     let c = Color(3, 2, 2);
+    let r = Rectangle {
+        width: 10,
+        height: 2,
+    };
+    println!("{:?}", r); // print in debug mode
+    println!("{}", r.area()); // print in debug mode)
+    let sq = Rectangle::square(20);
 }
 
 struct Color(i32, i32, i32); //shorthand creation of struct without named fields
@@ -25,4 +32,25 @@ struct User {
     email: String,
     sign_in_count: u64,
     active: bool,
+}
+
+#[derive(Debug)]
+struct Rectangle {
+    width: u32,
+    height: u32,
+}
+
+impl Rectangle {
+    fn area(&self) -> u32 {
+        self.height * self.width
+    }
+
+    // assiciated function
+    // also known as static method in object oriented languages
+    fn square(size: u32) -> Rectangle {
+        Rectangle {
+            width: size,
+            height: size,
+        }
+    }
 }
