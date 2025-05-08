@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+
 pub fn run() {
     shadowing();
     data_allocation();

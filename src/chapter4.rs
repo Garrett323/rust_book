@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+
 pub fn run() {
     // varibales with known size at compile time which are stored on the stack default to copy
     primitive_copy();
@@ -16,8 +18,8 @@ pub fn run() {
     complex_type_ref(&s);
     println!("outside the function: {s}");
     // you can have multiple read only references
-    let r1 = &s;
-    let r2 = &s;
+    let _r1 = &s;
+    let _r2 = &s;
     // mutable refs have to be unique!
     // let r3 = mut &s;
     let mut s = String::from("Hello World!");

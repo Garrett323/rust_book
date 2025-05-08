@@ -2,6 +2,7 @@
  * HAVING FUN WITH ENUMS
  * and pattern matching too
  */
+#[allow(dead_code)]
 
 pub fn run() {
     create();
@@ -14,6 +15,7 @@ enum MyEnum {
 }
 
 // enums also can contain information
+#[allow(unused)]
 enum MyEnumButBetter {
     A(u32),
     B(i32),

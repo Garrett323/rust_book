@@ -1,4 +1,5 @@
 use rand::Rng;
+#[allow(dead_code)]
 
 pub fn guessing_game() {
     let lower = 0;
