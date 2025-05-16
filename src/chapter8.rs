@@ -2,13 +2,20 @@
 // These collections (or sometimes called containers) store data of variable size
 // Hence they are allocated on the heap
 //
-#[allow(dead_code)]
 
 pub fn run() {
     println!("Chapter8");
     vectors();
+    strings();
+    hash_maps();
+    // exercises
+    println!("Exercises");
+    let v = vec![2, 4, 5, 6, 9, 12];
+    println!("Mean of {:?} is {}", &v, mean(&v));
+    println!("Median of {:?} is {}", &v, median(&v));
 }
 
+#[allow(dead_code)]
 enum Container {
     A(i32),
     B(String),
@@ -44,4 +51,113 @@ fn vectors() {
     // vectors can only store one type.
     // To work around this we can use a Enum
     let v = vec![Container::A(2), Container::B(String::from("test"))];
+    // let a = &v[100]; // doesnt exist => throws an error
+    let a = v.get(100); // returns an option (None if the item doesnt exist)
+    let first = &v[0];
+    // v.push(Container::A(12)); // cannot do mutable borrow while there is a non mutable borrow
 } // <- v gets out of scope here, all contained values are dropped at this point
+
+#[allow(unused)]
+fn strings() {
+    // strings are implemented as collection of bytes (chars in C terms)
+    // they are UTF-8 encoded
+    "This is a string literal, its stored in the binary of the program";
+    let mut s = String::new(); // allocates memory for a new empty string
+    let s = "String literals are of type str, hence they have all methods of that type".to_string();
+    let s = String::from("Another way to init a string");
+    let mut s = String::from("Hello,");
+    s.push_str(" World"); // strings can be updated if they are mutable
+    s.push('!'); // push takes single bytes (chars) as parameter
+    let s1 = String::from("A");
+    let s2 = String::from("B");
+    let s = s1 + &s2; // note s1 has been moved and can no longer be used
+    let s1 = String::from("A");
+    let s2 = String::from("B");
+    let s = format!("{} - {}", s1, s2); // another way to format strings
+                                        // let h = s[0]; // rust does not support indexing for strings
+                                        // This is because of the UTF-8 encoding
+    let hello = "Здравствуйте";
+    // let answer = &hello[0]; // should be З but is in fact 208
+    // (becasue in utf-8 208 alone is not a valid character)
+    // indexing should be done in O(1) but this not really possible with strings hence another
+    // minor reason to now allow it
+    let answer = &hello[0..2]; // however slicing is allowed, if the range is valid
+                               // [0..1] will throw an error since the first char is 2 bytes long
+    println!("{answer}");
+    println!("Chars:");
+    for c in hello.chars() {
+        // iterate over chars
+        print!("{c} ");
+    }
+    println!("\nBytes:");
+    for b in hello.bytes() {
+        // iterate over raw byte values
+        print!("{b} ");
+    }
+    println!("");
+}
+
+// hashmaps are not common in systems programming, hence there is less build in support
+// and we need to manually import them
+use std::collections::HashMap;
+#[allow(unused)]
+// by default the hashmap uses a cryptographically strong hashing algorithm
+// this can be changed in performance critical applications
+fn hash_maps() {
+    // dictonaries in some other languages
+    // I assumestrings people know how they work and this is just rust specific
+    let mut scores = HashMap::new();
+    scores.insert(String::from("Blue"), 8);
+    scores.insert(String::from("Red"), 12);
+    // another way to init hashmaps
+    let teams = vec![String::from("Blue"), String::from("Red")];
+    let initial_scores = vec![10, 8];
+    // type annotation are need to tell the compiler the target data type
+    let mut scores: HashMap<_, _> = teams.iter().zip(initial_scores.iter()).collect();
+    // while constructing a hashmap types the implement the copy trait are copied (e.g. i32) while all other
+    // types are moved and hence invalid afterwars (e.g. Strings)
+    let mut scores = HashMap::new();
+    scores.insert(String::from("Blue"), 8);
+    scores.insert(String::from("Red"), 12);
+    match scores.get(&String::from("Blue")) {
+        None => println!("Not a valid entry"),
+        Some(x) => println!("Score: {x}"),
+    };
+    // iterationg over maps can be done using tuple deconstruction
+    scores.insert(String::from("Blue"), 40);
+    for (key, value) in &scores {
+        println!("{key}: {value}");
+    }
+    let mut scores = HashMap::new();
+    scores.insert(String::from("Blue"), 8);
+    scores.entry(String::from("Red")).or_insert(30);
+    scores.entry(String::from("Blue")).or_insert(30); // not inserted since we already have a blue entry
+    println!("{:?}", scores);
+    let text = "hello world wonderful world";
+    let mut map = HashMap::new();
+    for word in text.split_whitespace() {
+        // or_insert returns a mutable reference to the inserted value
+        let count = map.entry(word).or_insert(0);
+        *count += 1; // * <- dereference operator to modify the given value
+    }
+    println!("{:?}", map);
+}
+
+// exercises
+fn mean(numbers: &Vec<i32>) -> f32 {
+    let mut sum = 0;
+    for e in numbers {
+        sum += e;
+    }
+    sum as f32 / numbers.len() as f32
+}
+
+fn median(numbers: &Vec<i32>) -> f32 {
+    let mut sorted = numbers.clone();
+    sorted.sort();
+    if sorted.len() % 2 == 1 {
+        sorted[sorted.len() / 2] as f32
+    } else {
+        (sorted[sorted.len() / 2] + sorted[sorted.len() / 2 - 1]) as f32 / 2.0
+    }
+}
