@@ -10,9 +10,10 @@ pub fn run() {
     hash_maps();
     // exercises
     println!("Exercises");
-    let v = vec![2, 4, 5, 6, 9, 12];
+    let v = vec![2, 4, 5, 6, 9, 12, 4];
     println!("Mean of {:?} is {}", &v, mean(&v));
     println!("Median of {:?} is {}", &v, median(&v));
+    println!("Mode of {:?} is {}", &v, mode(&v));
 }
 
 #[allow(dead_code)]
@@ -160,4 +161,22 @@ fn median(numbers: &Vec<i32>) -> f32 {
     } else {
         (sorted[sorted.len() / 2] + sorted[sorted.len() / 2 - 1]) as f32 / 2.0
     }
+}
+
+fn mode(numbers: &Vec<i32>) -> i32 {
+    let mut lookup: HashMap<_, _> = HashMap::new();
+    let mut max_count = 0;
+    let mut mode = match numbers.get(0) {
+        Some(x) => *x,
+        None => panic!("Please provide an array with elements"),
+    };
+    for e in numbers {
+        let count = lookup.entry(e).or_insert(0);
+        *count += 1;
+        if *count > max_count {
+            max_count = *count;
+            mode = *e;
+        }
+    }
+    return mode;
 }
