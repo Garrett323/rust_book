@@ -3,6 +3,7 @@
 // Hence they are allocated on the heap
 //
 
+#[allow(unused)]
 pub fn run() {
     println!("Chapter8");
     vectors();
@@ -14,6 +15,15 @@ pub fn run() {
     println!("Mean of {:?} is {}", &v, mean(&v));
     println!("Median of {:?} is {}", &v, median(&v));
     println!("Mode of {:?} is {}", &v, mode(&v));
+    let mut departments = HashMap::new();
+    println!(
+        "{:?}",
+        text_interface("Add Sally to Marketing".to_string(), &mut departments)
+    );
+    println!(
+        "{:?}",
+        text_interface("Marketing".to_string(), &mut departments)
+    );
 }
 
 #[allow(dead_code)]
@@ -144,7 +154,10 @@ fn hash_maps() {
     println!("{:?}", map);
 }
 
-// exercises
+/************************************************************************************************************************
+* exercises
+************************************************************************************************************************/
+#[allow(unused)]
 fn mean(numbers: &Vec<i32>) -> f32 {
     let mut sum = 0;
     for e in numbers {
@@ -153,6 +166,7 @@ fn mean(numbers: &Vec<i32>) -> f32 {
     sum as f32 / numbers.len() as f32
 }
 
+#[allow(unused)]
 fn median(numbers: &Vec<i32>) -> f32 {
     let mut sorted = numbers.clone();
     sorted.sort();
@@ -163,6 +177,7 @@ fn median(numbers: &Vec<i32>) -> f32 {
     }
 }
 
+#[allow(unused)]
 fn mode(numbers: &Vec<i32>) -> i32 {
     let mut lookup: HashMap<_, _> = HashMap::new();
     let mut max_count = 0;
@@ -179,4 +194,26 @@ fn mode(numbers: &Vec<i32>) -> i32 {
         }
     }
     return mode;
+}
+
+#[allow(unused)]
+fn text_interface(
+    command: String,
+    departments: &mut HashMap<String, Vec<String>>,
+) -> Option<Vec<String>> {
+    if command.contains("Add") {
+        let pattern: Vec<&str> = command.split(" ").collect();
+        let name = pattern[1];
+        let dep = pattern.last().unwrap();
+        let employees = departments.entry(dep.to_string()).or_insert(Vec::new());
+        employees.push(name.to_string());
+        employees.sort();
+        return None;
+    } else {
+        if departments.contains_key(&command) {
+            return Some(departments[&command].clone());
+        } else {
+            return None;
+        }
+    }
 }
