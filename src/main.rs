@@ -1,3 +1,4 @@
+mod chapter10;
 mod chapter2;
 mod chapter3;
 mod chapter4;
@@ -15,5 +16,6 @@ fn main() {
     // chapter6::run();
     // chapter7::run();
     // chapter8::run();
-    chapter9::run();
+    // chapter9::run();
+    chapter10::run();
 }

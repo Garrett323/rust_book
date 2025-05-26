@@ -222,6 +222,8 @@ fn lifetimes() {
         println!("r: {}", r);
     }
     // will not compile without lifetime param
+    // Since we pass in a reference the lifetime is unknown to the compiler
+    // we need to reassure that both references have the same lifetime
     fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
         if x.len() > y.len() {
             x
@@ -230,7 +232,37 @@ fn lifetimes() {
         }
     }
     let string1 = String::from("abcd");
-    let string2 = "xyz";
-    let result = longest(string1.as_str(), string2);
-    println!("The longest string is {}", result);
+    let result;
+    {
+        let string2 = "xyz".to_string();
+        result = longest(string1.as_str(), string2.as_str()); // since result lifes as long
+                                                              // as s2 and s1 there is not a problem
+        println!("The longest string is {}", result);
+    }
+    // println!("The longest string is {}", result); // because string2 doesnt live here anymore
+    // this is not valid rust code
+    //
+    //wont compile returning a dangling reference rust will not let you do this
+    // fn longest<'a>(x: &'a str, y: &'a str) -> &'a str {
+    //     let res = "long".to_string();
+    //     return &res;
+    // }
+    // structs may use lifetime annotations too
+    #[allow(dead_code)]
+    struct ImportantExerpt<'a> {
+        part: &'a str,
+    }
+    let novel = String::from("Call me Ishmael. Some years ago...");
+    let first_sentence = novel.split('.').next().expect("Couldnt find '.'");
+    #[allow(unused_variables)]
+    let i = ImportantExerpt {
+        part: first_sentence,
+    }; // cannot outlive the owning variable (novel in this case)
+       // Rust does some inference on lifetimes
+       // so sometimes they are not required to be specified
+       // ########################
+       // check 'lifetime elision rules' for more information
+       // ########################
+    let s: &'static str = "Lives the enitre runtime of the program.";
+    println!("{s}");
 }
