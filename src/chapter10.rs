@@ -1,5 +1,6 @@
 use std::fmt::Display;
 
+#[allow(dead_code)]
 pub fn run() {
     println!("Chapter 10 : Generics, Traits and Lifetimes");
     make_code_generic();
