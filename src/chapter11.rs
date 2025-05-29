@@ -66,6 +66,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn custom_message() {
         let s = "custom";
         assert!(false, "This is a {} message!", s);
