@@ -22,6 +22,8 @@
 // since we moved the code to lib.rs we need to import it again
 use rust_book::{execute, Config};
 
+#[allow(dead_code)]
+
 pub fn run() {
     println!("Chapter12: Building a CLI application");
     println!("This is a recap of all the things done in previous chapters..");
@@ -33,8 +35,7 @@ pub fn run() {
 // we need to accept cmd-line arguments
 // like 'cargo run searchstring file.txt'
 fn mini_main() {
-    let args: Vec<String> = std::env::args().collect();
-    let config = Config::new(&args).unwrap_or_else(|err| {
+    let config = Config::new(std::env::args()).unwrap_or_else(|err| {
         eprintln!("Problem parsing arguments: {}", err);
         std::process::exit(1);
     });
