@@ -47,7 +47,8 @@ mod tests {
     #[test]
     #[should_panic(expected = "This is supposed to fail")] // and the specific error message was given
     fn fail() {
-        panic!("Wrong message");
+        // panic!("Wrong message"); // panic due to wrong message marks test as failed
+        panic!("This is supposed to fail");
     }
 
     #[test]

@@ -2,6 +2,21 @@ pub fn add_two(x: i32) -> i32 {
     x + 2
 }
 
+// Documentation with examples get used as test => write good Documentation = better code
+/// Adds one to the number given.
+///
+/// # Examples
+///
+/// ```
+/// let arg = 5;
+/// let answer = rust_book::add_one(arg);
+///
+/// assert_eq!(6, answer);
+/// ```
+pub fn add_one(x: i32) -> i32 {
+    x + 1
+}
+
 // return unit value or some
 // object that implement the error trait
 pub fn execute(config: Config) -> Result<(), Box<dyn std::error::Error>> {
