@@ -1,8 +1,12 @@
 use crate::chapter15::List::{Cons, Nil};
+use crate::chapter15::RcList::{RcCons, RcNil};
+use std::rc::Rc;
 
 pub fn run() {
     println!("Chapter 15: Smart Pointers");
     box_type();
+    deref_coersion();
+    dropping();
 }
 
 #[allow(dead_code)]
@@ -10,6 +14,13 @@ enum List {
     // Cons(i32, List), // recursive definitions are not allowed
     Cons(i32, Box<List>), // Box is a pointer => known size at compile time
     Nil,
+}
+
+#[allow(dead_code)]
+enum RcList {
+    // Cons(i32, List), // recursive definitions are not allowed
+    RcCons(i32, Rc<RcList>), // Box is a pointer => known size at compile time
+    RcNil,
 }
 
 #[allow(unused_variables)]
@@ -53,4 +64,49 @@ impl<T> std::ops::Deref for MyBox<T> {
     fn deref(&self) -> &T {
         &self.0
     }
+}
+
+fn deref_coersion() {
+    fn hello(name: &str) {
+        println!("{}", name);
+    }
+
+    let name = String::from("Hans");
+    hello(&name);
+    let name = MyBox::new(String::from("Hans"));
+    hello(&name);
+}
+
+struct CustomPointer {
+    data: String,
+}
+impl Drop for CustomPointer {
+    fn drop(&mut self) {
+        println!("Dropping pointer with data: {}", self.data);
+    }
+}
+
+fn dropping() {
+    let _p = CustomPointer {
+        data: String::from("Test"),
+    };
+    let _p2 = CustomPointer {
+        data: String::from("Test2"),
+    };
+    // calling drop early is not allowed
+    // _p.drop() // will give a compier error
+    std::mem::drop(_p); // use this instead
+    println!("Created pointer");
+}
+
+fn reference_counting() {
+    // allows multiple owners for a single piece of memory
+    let a = Cons(5, Box::new(Cons(10, Box::new(Nil))));
+    let _b = Cons(3, Box::new(a)); // a gets moved into b => we are not able to use a
+                                   // afterwards anymore
+
+    // let c = Cons(7, Box::new(a)); // compiler error
+    let a = Rc::new(RcCons(5, Rc::new(RcCons(10, Rc::new(RcNil)))));
+    let b = RcCons(3, Rc::clone(&a)); // a gets moved into b => we are not able to use a
+    let c = RcCons(7, Rc::clone(&a)); // compiler error
 }
