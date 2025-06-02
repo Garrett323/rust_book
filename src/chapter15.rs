@@ -7,6 +7,11 @@ pub fn run() {
     box_type();
     deref_coersion();
     dropping();
+    reference_counting();
+    println!(
+        "The RefCell type enures Rusts borrow checker rules at runtime rather than compile time!"
+    );
+    println!("Check lib.rs to see an example use case.");
 }
 
 #[allow(dead_code)]
@@ -107,6 +112,12 @@ fn reference_counting() {
 
     // let c = Cons(7, Box::new(a)); // compiler error
     let a = Rc::new(RcCons(5, Rc::new(RcCons(10, Rc::new(RcNil)))));
-    let b = RcCons(3, Rc::clone(&a)); // a gets moved into b => we are not able to use a
-    let c = RcCons(7, Rc::clone(&a)); // compiler error
+    println!("rc after creating a {}", Rc::strong_count(&a));
+    let _b = RcCons(3, Rc::clone(&a)); // a gets moved into b => we are not able to use a
+    println!("rc after creating b {}", Rc::strong_count(&a));
+    {
+        let _c = RcCons(7, Rc::clone(&a)); // compiler error
+        println!("rc after creating c {}", Rc::strong_count(&a));
+    }
+    println!("rc after c out of scope {}", Rc::strong_count(&a));
 }

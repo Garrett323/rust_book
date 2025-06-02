@@ -1,3 +1,5 @@
+use std::usize;
+
 pub fn add_two(x: i32) -> i32 {
     x + 2
 }
@@ -105,5 +107,79 @@ mod tests {
             vec!["Rust:", "Trust me."],
             search_case_insensitive(query, contents)
         );
+    }
+
+    //////////////////////////// Chapter 15: Mock Object ////////////////////////////////////
+    use std::cell::RefCell;
+    struct MockMessenger {
+        // sent_messages: Vec<String>, // we want to modify this field but cannot due to mutability
+        // restirctions
+        sent_messages: RefCell<Vec<String>>, // Hence we can use a RefCell
+    }
+
+    impl MockMessenger {
+        fn new() -> MockMessenger {
+            MockMessenger {
+                sent_messages: RefCell::new(vec![]),
+            }
+        }
+    }
+
+    impl Messenger for MockMessenger {
+        fn send(&self, message: &str) {
+            // cannot change method signature due to trait requirements
+            // self.sent_messages.push(message.to_string()); // trying to mutate immutable object =>
+            // not allowed
+            self.sent_messages.borrow_mut().push(message.to_string()); // since we know this
+                                                                       // operation is safe we can
+                                                                       // use a RefCell to access
+                                                                       // the data
+        }
+    }
+
+    #[test]
+    fn it_send_an_over_75_percent() {
+        let mock_messenger = MockMessenger::new();
+        let mut limit_tracker = LimitTracker::new(&mock_messenger, 100);
+        limit_tracker.set_value(80);
+        assert_eq!(mock_messenger.sent_messages.borrow().len(), 1);
+    }
+}
+
+//////////////////////////// Chapter 15: Mock Object ////////////////////////////////////
+pub trait Messenger {
+    fn send(&self, msg: &str);
+}
+
+pub struct LimitTracker<'a, T: 'a + Messenger> {
+    messenger: &'a T,
+    value: usize,
+    max: usize,
+}
+
+impl<'a, T> LimitTracker<'a, T>
+where
+    T: Messenger,
+{
+    pub fn new(messenger: &T, max: usize) -> LimitTracker<T> {
+        LimitTracker {
+            messenger,
+            value: 0,
+            max,
+        }
+    }
+
+    pub fn set_value(&mut self, value: usize) {
+        self.value = value;
+
+        let percentage_of_max = self.value as f64 / self.max as f64;
+        if percentage_of_max > 1.0 {
+            self.messenger.send("Error: you are over your quota!");
+        } else if percentage_of_max >= 0.9 {
+            self.messenger
+                .send("Urgent Warning: u used 90% of your quota!");
+        } else if percentage_of_max >= 0.75 {
+            self.messenger.send("Warning: u used 75% of your quota!");
+        }
     }
 }
