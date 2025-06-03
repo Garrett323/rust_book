@@ -12,6 +12,7 @@ pub fn run() {
         "The RefCell type enures Rusts borrow checker rules at runtime rather than compile time!"
     );
     println!("Check lib.rs to see an example use case.");
+    reference_cycles(); // Memory leaks
 }
 
 #[allow(dead_code)]
@@ -121,3 +122,23 @@ fn reference_counting() {
     }
     println!("rc after c out of scope {}", Rc::strong_count(&a));
 }
+
+use crate::chapter15::CycleList::{Cons as CCons, Nil as CNil};
+use std::cell::RefCell;
+
+#[derive(Debug)]
+enum CycleList {
+    Cons(i32, RefCell<Rc<CycleList>>),
+    Nil,
+}
+
+impl CycleList {
+    fn tail(&self) -> Option<&RefCell<Rc<CycleList>>> {
+        match self {
+            CCons(_, item) => item,
+            CNil => None,
+        }
+    }
+}
+
+fn reference_cycles() {}
