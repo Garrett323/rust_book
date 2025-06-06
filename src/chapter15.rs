@@ -2,6 +2,7 @@ use crate::chapter15::List::{Cons, Nil};
 use crate::chapter15::RcList::{RcCons, RcNil};
 use std::rc::Rc;
 
+#[allow(dead_code)]
 pub fn run() {
     println!("Chapter 15: Smart Pointers");
     box_type();
