@@ -13,6 +13,7 @@ pub fn run() {
     );
     println!("Check lib.rs to see an example use case.");
     reference_cycles(); // Memory leaks
+    weak_references_and_trees();
 }
 
 #[allow(dead_code)]
@@ -128,17 +129,82 @@ use std::cell::RefCell;
 
 #[derive(Debug)]
 enum CycleList {
-    Cons(i32, RefCell<Rc<CycleList>>),
+    Cons((), RefCell<Rc<CycleList>>),
     Nil,
 }
 
 impl CycleList {
     fn tail(&self) -> Option<&RefCell<Rc<CycleList>>> {
         match self {
-            CCons(_, item) => item,
+            CCons(_, item) => Some(item),
             CNil => None,
         }
     }
 }
 
-fn reference_cycles() {}
+fn reference_cycles() {
+    let a = Rc::new(CCons((), RefCell::new(Rc::new(CNil))));
+    println!("a initial rc count = {}", Rc::strong_count(&a));
+    println!("a next item = {:?}", a.tail());
+    let b = Rc::new(CCons((), RefCell::new(Rc::clone(&a))));
+    println!("a rc count after b creation = {}", Rc::strong_count(&a));
+    println!("b initial rc count = {}", Rc::strong_count(&b));
+    println!("b next item = {:?}", b.tail());
+    if let Some(link) = a.tail() {
+        *link.borrow_mut() = Rc::clone(&b);
+    }
+
+    println!("b rc count after changing a = {}", Rc::strong_count(&b));
+    println!("a rc count after changing a = {}", Rc::strong_count(&a));
+    // Uncomment the next line to see that we have a cycle;
+    // it will overflow the stack.
+    // println!("a next item = {:?}", a.tail());
+}
+
+fn weak_references_and_trees() {
+    use std::rc::Weak;
+
+    #[derive(Debug)]
+    #[allow(dead_code)]
+    struct Node {
+        value: i32,
+        parent: RefCell<Weak<Node>>,
+        children: RefCell<Vec<Rc<Node>>>,
+    }
+
+    let leaf = Rc::new(Node {
+        value: 3,
+        parent: RefCell::new(Weak::new()),
+        children: RefCell::new(vec![]),
+    });
+    println!(
+        "leaf strong = {}, weak = {}",
+        Rc::strong_count(&leaf),
+        Rc::weak_count(&leaf),
+    );
+    println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+    {
+        let branch = Rc::new(Node {
+            value: 3,
+            parent: RefCell::new(Weak::new()),
+            children: RefCell::new(vec![Rc::clone(&leaf)]),
+        });
+        *leaf.parent.borrow_mut() = Rc::downgrade(&branch);
+        println!(
+            "branch strong = {}, weak = {}",
+            Rc::strong_count(&branch),
+            Rc::weak_count(&branch),
+        );
+        println!(
+            "leaf strong = {}, weak = {}",
+            Rc::strong_count(&leaf),
+            Rc::weak_count(&leaf),
+        );
+    }
+    println!("leaf parent = {:?}", leaf.parent.borrow().upgrade());
+    println!(
+        "leaf strong = {}, weak = {}",
+        Rc::strong_count(&leaf),
+        Rc::weak_count(&leaf),
+    );
+}
