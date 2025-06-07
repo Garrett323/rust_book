@@ -12,6 +12,10 @@ pub fn run() {
     threading();
     move_closures_with_threads();
     message_passing();
+    shared_state();
+    println!("The Send trait lets values be transferred between threads safely (Rc does not implement Send => cannot be transferred)");
+    println!("The Sync trait lets values be accessed between threads safely (Rc does not implement Sync => cannot be accessed by more than one thread)");
+    println!("While these can be implemented manually, all types that are composed of types with these trait automatically inherit them");
 }
 
 fn threading() {
@@ -54,16 +58,76 @@ fn move_closures_with_threads() {
 fn message_passing() {
     use std::sync::mpsc;
     use std::thread; // mpsc => Multiple Producer Single Consumer
+    use std::time::Duration;
 
     // tx = transmitter, rx = receiver
     let (tx, rx) = mpsc::channel();
+    // needs to be copied here cuase its moved later on
+    let tx1 = mpsc::Sender::clone(&tx);
     thread::spawn(move || {
         let val = String::from("HI");
         tx.send(val).unwrap();
         // println!("Sent: {}", val); // not valid, struct transferred ownership => we cannot use val
         // anmore here
+        let vals = vec![
+            String::from("from"),
+            String::from("the"),
+            String::from("Thread"),
+        ];
+        for val in vals {
+            tx.send(val).unwrap();
+            thread::sleep(Duration::from_millis(50));
+        }
+    });
+    // we can have multiple sender
+    thread::spawn(move || {
+        let vals = vec![
+            String::from("more"),
+            String::from("messages"),
+            String::from("here"),
+        ];
+        for val in vals {
+            tx1.send(val).unwrap();
+            thread::sleep(Duration::from_millis(50));
+        }
     });
 
-    let received = rx.recv().unwrap();
-    println!("Got: {}", received);
+    // let received = rx.recv().unwrap(); // blocking receive call use revc_try for non blocking
+    for received in rx {
+        // is iterable for receiving multiple items
+        println!("Got: {}", received);
+    }
+}
+
+fn shared_state() {
+    use std::sync::{Arc, Mutex}; // Arc => atomic Rc
+                                 // like Rc but safe to use in a multithreaded env
+    use std::thread;
+
+    let m = Mutex::new(5);
+    {
+        let mut num = m.lock().unwrap(); // blocking call (waits until we have
+                                         // the lock)
+        *num = 6;
+        // MutexGuard gets out of scope => the lock is dropped
+    }
+    println!("m = {:?}", m);
+
+    //////////////////////////////////////////////////////////77
+
+    let counter = Arc::new(Mutex::new(0));
+    let mut handles = vec![];
+    for _ in 0..10 {
+        // without the Arc this is not safe => only one owner of the mutex is possible
+        let counter = Arc::clone(&counter);
+        let handle = thread::spawn(move || {
+            let mut num = counter.lock().unwrap();
+            *num += 1;
+        });
+        handles.push(handle);
+    }
+    for handle in handles {
+        handle.join().unwrap();
+    }
+    println!("Result: {}", *counter.lock().unwrap());
 }
