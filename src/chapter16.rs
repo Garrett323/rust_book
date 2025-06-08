@@ -1,3 +1,5 @@
+#[allow(dead_code)]
+
 pub fn run() {
     println!("Chapter 16: Concurrent Programming");
     /*
