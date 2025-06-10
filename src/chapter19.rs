@@ -1,3 +1,5 @@
+use std::fmt::Formatter;
+
 static mut COUNTER: u32 = 0;
 
 pub fn run() {
@@ -5,6 +7,8 @@ pub fn run() {
 
     unsafe_rust();
     advanced_traits();
+    advanced_types();
+    advanced_functions_and_closures();
 }
 
 fn unsafe_rust() {
@@ -139,4 +143,129 @@ fn unsafe_rust() {
     }
 }
 
-fn advanced_traits() {}
+fn advanced_traits() {
+    #[allow(dead_code)]
+    pub trait Iterator {
+        type Item; // type required by type but left arbitrary until specific implementation is
+                   // provided
+                   // like here an iterator returns a specific type but the trait is unaware of all possible
+                   // types (user defined types are hard to know in advance)
+
+        fn next(&mut self) -> Option<Self::Item>;
+    }
+    // so why not use generics?
+    // we could provide multiple definitions
+    // => we could have multiple implementations of the same trait on the same type for different
+    // T
+    //pub trait Iterator<T> {
+    //    fn next(&mut self) -> Option<T>;
+    //}
+
+    // nothing prevents two traits to call their methods the same
+    // and nothing prevents us from implementing both on a struct
+    trait Wizard {
+        fn fly(&self);
+        fn name() -> String;
+    }
+    trait Pilot {
+        fn fly(&self);
+    }
+    struct Human {}
+    impl Wizard for Human {
+        fn fly(&self) {
+            println!("Up!");
+        }
+        fn name() -> String {
+            String::from("Gandalf")
+        }
+    }
+    impl Pilot for Human {
+        fn fly(&self) {
+            println!("This is your captain!");
+        }
+    }
+    impl Human {
+        fn fly(&self) {
+            println!("Waving arms!");
+        }
+
+        fn name() -> String {
+            String::from("Human")
+        }
+    }
+
+    let h = Human {};
+    // defaults to implementation on struct
+    h.fly();
+    // use mor specific syntax to call trait methods
+    // this works when the method takes a self parameter
+    Wizard::fly(&h);
+    Pilot::fly(&h);
+    // without self parameter
+    println!("{}", Human::name()); // this is clear
+                                   // println!("{}", Wizard::name()); // multiple type might implement this function, whihc do we
+                                   // want?
+    println!("{}", <Human as Wizard>::name()); // this way we can specifiy which implementation we
+                                               // want to call
+    use std::fmt;
+    trait OutlinePrint: fmt::Display {
+        // requires type to implent the Display trait
+        fn outline_print(&self) {
+            let output = self.to_string();
+            let len = output.len();
+            println!("{}", "*".repeat(len + 4));
+            println!("*{}*", " ".repeat(len + 2));
+            println!("* {} *", output);
+            println!("*{}*", " ".repeat(len + 2));
+            println!("{}", "*".repeat(len + 4));
+        }
+    }
+
+    struct Point {
+        x: i32,
+        y: i32,
+    }
+    impl fmt::Display for Point {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+            write!(f, "({}, {})", self.x, self.y)
+        }
+    }
+    impl OutlinePrint for Point {}
+
+    let p = Point { x: 1, y: 3 };
+    p.outline_print();
+}
+
+fn advanced_types() {
+    // type alias
+    type Kilometer = i32;
+    let x: i32 = 4;
+    let y: Kilometer = 3;
+    println!("{}", x + y); // since we use a type alias both are the same type under the hood
+                           // this doesnt provide rigouros type checking as the newtype pattern
+                           // but may be usefull to provide shorthand notations for long types
+
+    // never type !
+    fn never_to_return() -> ! {
+        // -- snip --
+    } // indcates the compiler this function will never return
+      // used for match arms that dont return makes the compiler aware that it never returns
+
+    // let s1: str = "Hello";  // not valid rust code since the sizes are unknown at compile time
+    // => both steings take a different amount of memory
+    // let s2: str = "Im a str";
+    // every type with known size at compiler time implemetns the trait SIzed
+    // this is also inheritet for other types if all contained types implement Sized
+    struct _Test {
+        // -> inherits Sized Trait
+        _t: u32,
+    }
+    fn generics<T: ?Sized>(t: &T) { // this syntax is only available for SIzed (reads may or not be
+                                    // SIzed)
+                                    // allows for types that dont implement Sized
+    }
+}
+
+fn advanced_functions_and_closures() {
+    //
+}
