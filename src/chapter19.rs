@@ -1,4 +1,4 @@
-use std::fmt::Formatter;
+#[allow(dead_code)]
 
 static mut COUNTER: u32 = 0;
 
@@ -9,6 +9,7 @@ pub fn run() {
     advanced_traits();
     advanced_types();
     advanced_functions_and_closures();
+    macros();
 }
 
 fn unsafe_rust() {
@@ -246,8 +247,10 @@ fn advanced_types() {
                            // but may be usefull to provide shorthand notations for long types
 
     // never type !
+    #[allow(dead_code)]
     fn never_to_return() -> ! {
         // -- snip --
+        loop {}
     } // indcates the compiler this function will never return
       // used for match arms that dont return makes the compiler aware that it never returns
 
@@ -260,12 +263,79 @@ fn advanced_types() {
         // -> inherits Sized Trait
         _t: u32,
     }
-    fn generics<T: ?Sized>(t: &T) { // this syntax is only available for SIzed (reads may or not be
-                                    // SIzed)
-                                    // allows for types that dont implement Sized
+    #[allow(dead_code)]
+    fn generics<T: ?Sized>(_t: &T) { // this syntax is only available for SIzed (reads may or not be
+                                     // SIzed)
+                                     // allows for types that dont implement Sized
     }
 }
 
 fn advanced_functions_and_closures() {
+    fn add_one(x: i32) -> i32 {
+        x + 1
+    }
+
+    fn do_twice(f: fn(i32) -> i32, arg: i32) -> i32 {
+        f(arg) + f(arg)
+    }
+
+    // we are passing a function pointer
+    // implements all Fn traits and is in rust always passable if a closure is accepted
+    // other languages (C) do not support this so when interfacing with other languages we always
+    // need to pass a function pointer
+    let answer = do_twice(add_one, 5);
+    println!("answer: {}", answer);
+
+    #[allow(dead_code)]
+    enum Status {
+        Value(u32),
+        Stop,
+    }
+
+    // constructors can also be passed as function pointer
+    let _list_of_values: Vec<Status> = (0u32..20).map(Status::Value).collect();
+
+    // returning closures
+    // doesnt compile, cant return traits (they dont have a known size at compile time)
+    // fn returns_closure() -> Fn(i32) -> i32 {
+    //     |x| x + 1
+    // }
     //
+    fn returns_closure() -> Box<dyn Fn(i32) -> i32> {
+        Box::new(|x| x + 1)
+    }
+    println!("result from closure: {}", returns_closure()(2))
+}
+
+fn macros() {
+    println!("This is a macro call");
+
+    // #[macro_export] // means macro should be available whenever the crate is brought into scope
+    macro_rules! vec {
+        ( $( $x:expr )=>* ) => { // similar to match expressions => is the separator token
+            {
+                let mut temp_vec = Vec::new();
+                $(
+                    temp_vec.push($x);
+                )*
+                temp_vec
+            }
+        };
+    }
+    let v = vec![1=> 2=> 3];
+    println!("{:?}", v);
+
+    // procedural macros
+    // syntax looks like this
+    // use proc_macro;
+    // #[some_attribute]
+    // pub fn some_name(input: TokenStream) -> TokenStream {
+    // }
+    use hello_macro::HelloMacro;
+    use hello_macro_derive::HelloMacro;
+
+    #[derive(HelloMacro)]
+    struct Pancakes;
+
+    Pancakes::hello_macro();
 }
