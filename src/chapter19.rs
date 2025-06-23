@@ -1,7 +1,6 @@
-#[allow(dead_code)]
-
 static mut COUNTER: u32 = 0;
 
+#[allow(dead_code)]
 pub fn run() {
     println!("Chapter 19: Advanced Features");
 
