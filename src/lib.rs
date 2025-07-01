@@ -1,5 +1,3 @@
-use std::usize;
-
 pub fn add_two(x: i32) -> i32 {
     x + 2
 }
@@ -181,5 +179,67 @@ where
         } else if percentage_of_max >= 0.75 {
             self.messenger.send("Warning: u used 75% of your quota!");
         }
+    }
+}
+
+//////////////////////////// Chapter 20: Multithreaded Server ////////////////////////////////////
+use std::sync::{mpsc, Arc, Mutex};
+
+pub struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>,
+}
+
+trait FnBox {
+    fn call_box(self: Box<Self>);
+}
+
+impl<F: FnOnce()> FnBox for F {
+    fn call_box(self: Box<Self>) {
+        (*self)();
+    }
+}
+
+type Job = Box<dyn FnBox + Send + 'static>;
+
+impl ThreadPool {
+    /// Create a new ThreadPool
+    ///
+    /// # Penics
+    ///
+    /// The `new` function will panic!("c if n_thread is 0");
+    pub fn new(number_of_threads: usize) -> ThreadPool {
+        assert!(number_of_threads > 0);
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+        let mut workers = Vec::with_capacity(number_of_threads);
+        for id in 0..number_of_threads {
+            workers.push(Worker::new(id, Arc::clone(&receiver)));
+        }
+        ThreadPool { workers, sender }
+    }
+
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job = Box::new(f);
+        self.sender.send(job).unwrap();
+    }
+}
+
+struct Worker {
+    id: usize,
+    thread: std::thread::JoinHandle<()>,
+}
+
+impl Worker {
+    fn new(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Worker {
+        let thread = std::thread::spawn(move || loop {
+            let job = receiver.lock().unwrap().recv().unwrap();
+            println!("Worker {} got job; executing.", id);
+            job.call_box();
+        });
+        Worker { id, thread }
     }
 }
